@@ -1,0 +1,127 @@
+<!-- Local rules -->
+<!-- Modify it at your will. -->
+<!-- Copyright (C) 2015-2020, Wazuh Inc. -->
+<!-- Example -->
+<group name="local,syslog,sshd,">
+  <!--
+Dec 10 01:02:02 host sshd[1234]: Failed none for root from 1.1.1.1 port 1066 ssh2
+-->
+  <rule id="100001" level="5">
+    <if_sid>5716</if_sid>
+    <srcip>1.1.1.1</srcip>
+    <description>sshd: authentication failed from IP 1.1.1.1.</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+</group>
+<!--Detect Metasploit meterpreter-->
+<group name="wazuh,">
+    <rule id="100002" level="0">
+        <location>command_ps-list</location>
+        <description>List of running process.</description>
+        <group>process_monitor,</group>
+    </rule>
+ 
+    <rule id="100003" level="13">
+        <if_sid>100002</if_sid>
+        <match>eval(base64_decode</match>
+        <description>Reverse shell detected.</description>
+        <group>process_monitor,attacks</group>
+    </rule>
+    <rule id="100004" level="13">
+        <if_sid>100002</if_sid>
+        <match>-server http</match>
+        <description>Possible C2C Reverse shell detected.</description>
+        <group>process_monitor,attacks</group>
+    </rule>
+  <rule id="100006" level="0">
+        <location>command_detect-env</location>
+        <description>Search export or env command execution. Exfiltratation system variables.</description>
+        <group>process_monitor</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+
+    <rule id="100007" level="12">
+        <if_sid>100006</if_sid>
+        <match>env</match>
+        <description>Exfiltratation of system variables detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+     <rule id="100008" level="12">
+        <if_sid>100006</if_sid>
+        <match>export</match>
+        <description>Exfiltratation of system variables detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+   <rule id="100009" level="15">
+        <if_sid>100006</if_sid>
+        <match>LinEnum</match>
+        <description>Exfiltratation execution LinEnum.sh detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+    <rule id="100010" level="15">
+        <if_sid>100002</if_sid>
+        <match>LinEnum</match>
+        <description>Exfiltratation execution LinEnum.sh detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+    <rule id="100011" level="12">
+        <if_sid>100002</if_sid>
+        <match>curl</match>
+        <description>Command execution curl detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+     <rule id="100012" level="12">
+        <if_sid>100002</if_sid>
+        <match>wget</match>
+        <description>Command execution wget detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+    <rule id="100013" level="12">
+        <if_sid>100006</if_sid>
+        <match>wget</match>
+        <description>Process execution wget detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+    <rule id="100014" level="12">
+        <if_sid>100006</if_sid>
+        <match>wget</match>
+        <description>Process execution curl detected.</description>
+        <group>process_monitor,attacks,automatic_attack</group>
+        <mitre>
+            <id>T1020</id>
+            <id>T1041</id>
+        </mitre>
+    </rule>
+</group>
+

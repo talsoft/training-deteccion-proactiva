@@ -1,0 +1,47 @@
+#!/bin/bash
+# Custom OSSEC block / Easily modifiable for custom responses (touch a file, insert to db, etc).
+# Expect: srcip
+# 
+#------------------------- Gather parameters -------------------------#
+
+# Static active response parameters
+#LOCAL=`dirname $0`
+LOCAL=`dirname $0`;
+cd $LOCAL
+cd ../
+
+PWD=`pwd`
+
+read INPUT_JSON
+AGENTID=$(echo $INPUT_JSON | grep -Po '"agent":.*?[^\\]",'|awk -F':"' '{print $2}' |awk -F'",' '{print $1}')
+RULE=$(echo $INPUT_JSON | grep -Po '"description":.*?[^\\]",'|awk -F':"' '{print $2}' |awk -F'",' '{print $1}')
+RULEID=$(echo $INPUT_JSON | grep -Po '"id":.*?[^\\]",'|awk -F':"' '{print $2}' |awk -F'",' '{print $1}' | head -n 1)
+SRCIP=$(echo $INPUT_JSON | grep -Po '"srcip":.*?[^\\]",'|awk -F':"' '{print $2}' |awk -F'",' '{print $1}')
+#IDCODE=$(echo $INPUT_JSON | jq -r .parameters.alert.data.id)
+URL=$(echo $INPUT_JSON | grep -Po '"full_log":.*?[^\\]",'|awk -F':"' '{print $2}' |awk -F'",' '{print $1}')
+COMMAND=$(echo $INPUT_JSON | grep -Po '"command":.*?[^\\]",'|awk -F':"' '{print $2}' |awk -F'",' '{print $1}')
+
+# Move to the active response folder
+
+LOG_FILE="${PWD}/../logs/active-responses.log"
+BLOCKINSTANT=1
+#BlockInstant or not? for shellshock attack block instant
+if [[ ${RULEID} = "31166" ]]  || [[ ${RULEID} = "31168" ]] || [[ ${RULEID} = "31169" ]] || [[ ${RULEID} = "31167" ]]
+then
+  BLOCKINSTANT=35
+fi
+#echo ${COMMAND}
+#------------------------ Analyze command -------------------------#
+if [[ ${COMMAND} = "add" ]]
+then
+  COMMAND3=$(python3 /var/ossec/active-response/bin/insertIPToDynamoDB.py "${SRCIP}" "${AGENTID}" "${RULE}" "${RULEID}" "${URL}" "${BLOCKINSTANT}")
+ # echo "execute python command "${COMMAND3} >> ${LOG_FILE}
+fi
+
+if [ $? -eq 0 ]; then
+ echo "`date '+%Y/%m/%d %H:%M:%S'` $0: $INPUT_JSON" >> ${LOG_FILE}
+else
+ echo "`date '+%Y/%m/%d %H:%M:%S'` $0: $INPUT_JSON" >> ${LOG_FILE}
+fi
+
+exit 0;
